@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}{{ b.name }}{% endblock %}
+{% block content %}
+<p class="small"><a href="/leads">← All leads</a></p>
+<div class="row spread" style="margin-bottom:1rem">
+  <div>
+    <h1 style="margin:0">{{ b.name }}</h1>
+    <div class="row" style="margin-top:.35rem">
+      <span class="badge s-{{ b.status }}">{{ b.status|status_label }}</span>
+      {% if b.is_test_data %}<span class="badge test">TEST DATA</span>{% endif %}
+      {% if not b.website_url %}<span class="badge warn">No website</span>{% elif not b.domain %}<span class="badge warn">Social page only</span>{% endif %}
+      {% if b.qualification_score is not none %}<span class="badge">Score {{ '%.0f'|format(b.qualification_score) }}</span>{% endif %}
+    </div>
+  </div>
+  <a class="btn" href="/leads/{{ b.id }}/edit">Edit details</a>
+</div>
+
+{% if blocked %}
+  <div class="flash err"><strong>On the do-not-contact list.</strong> {{ blocked.reason }} (added {{ blocked.added_at|d }}). This business will never be emailed.</div>
+{% endif %}
+{% if b.status == 'disqualified' and b.disqualify_reason %}
+  <div class="flash warn"><strong>Disqualified:</strong> {{ b.disqualify_reason }}</div>
+{% endif %}
+{% if b.last_error %}<div class="flash err"><strong>Last error:</strong> {{ b.last_error }}</div>{% endif %}
+
+<div class="grid two">
+  <div>
+    <section class="card">
+      <h2>Details</h2>
+      <dl class="fields">
+        <dt>Industry</dt><dd>{{ b.industry or '–' }}</dd>
+        <dt>Location</dt><dd>{{ [b.suburb, b.city, b.state]|select|join(', ') or '–' }}</dd>
+        <dt>Address</dt><dd>{{ b.address or '–' }}</dd>
+        <dt>Phone</dt><dd>{{ b.phone or '–' }}</dd>
+        <dt>Website</dt><dd>{% if b.website_url %}<a href="{{ b.website_url }}" target="_blank" rel="noopener noreferrer">{{ b.website_url }}</a>{% else %}None{% endif %}</dd>
+        <dt>Rating</dt><dd>{% if b.rating is not none %}{{ b.rating }} from {{ b.review_count or 0 }} reviews{% else %}–{% endif %}</dd>
+        <dt>Source</dt><dd>{{ b.source.replace('_', ' ') }}{% if b.google_place_id %} <span class="muted small">({{ b.google_place_id }})</span>{% endif %}</dd>
+        <dt>Found</dt><dd>{{ b.date_found|dt }}</dd>
+        <dt>Last contacted</dt><dd>{{ last_contacted|dt or 'Never' }}</dd>
+        <dt>Contact page</dt><dd>{% if b.contact_page_url %}<a href="{{ b.contact_page_url }}" target="_blank" rel="noopener noreferrer">{{ b.contact_page_url }}</a>{% else %}–{% endif %}</dd>
+        <dt>Email published?</dt><dd>{{ {'yes': 'Yes, an address appears to be published', 'no': 'No address found on the site', 'unknown': 'Not checked yet'}[b.email_published_flag] }}</dd>
+      </dl>
+    </section>
+
+    <section class="card" id="contact">
+      <h2>Contact email</h2>
+      <p class="muted small">Type the address yourself after finding it on the business's own website or listing. The app never collects addresses automatically (Spam Act address-harvesting rule).</p>
+      <form method="post" action="/leads/{{ b.id }}/contact-email">
+        <div class="form-grid">
+          <div class="field">
+            <label for="contact_email">Email address</label>
+            <input type="email" id="contact_email" name="contact_email" value="{{ b.contact_email or '' }}" autocomplete="off">
+            {% if b.email_bad %}<div class="hint" style="color:var(--bad)">This address bounced. Check it before using it again.</div>{% endif %}
+          </div>
+          <div class="field">
+            <label for="contact_name">Contact name (optional)</label>
+            <input type="text" id="contact_name" name="contact_name" value="{{ b.contact_name or '' }}">
+          </div>
+        </div>
+        <div class="field">
+          <label class="check"><input type="checkbox" name="email_confirmed_published" {{ 'checked' if b.email_confirmed_published }}>
+            I found this address published on the business's own website or listing.</label>
+        </div>
+        <button class="primary">Save contact</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Outcome and status</h2>
+      <div class="row" style="margin-bottom:1rem">
+        <form class="inline" method="post" action="/leads/{{ b.id }}/status"><input type="hidden" name="status" value="won"><button class="primary">Mark Won</button></form>
+        <form class="inline" method="post" action="/leads/{{ b.id }}/status"><input type="hidden" name="status" value="lost"><button>Mark Lost</button></form>
+      </div>
+      <details>
+        <summary>Change status by hand</summary>
+        <form method="post" action="/leads/{{ b.id }}/status" style="margin-top:.75rem">
+          <div class="form-grid">
+            <div class="field">
+              <label for="status">New status</label>
+              <select id="status" name="status">
+                {% for s in manual_statuses %}<option value="{{ s }}">{{ s|status_label }}</option>{% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label for="note">Note or reason</label>
+              <input type="text" id="note" name="note" placeholder="Required when disqualifying">
+            </div>
+          </div>
+          <button>Update status</button>
+        </form>
+      </details>
+      <details style="margin-top:.75rem">
+        <summary>Add to do-not-contact list</summary>
+        <form method="post" action="/leads/{{ b.id }}/do-not-contact" style="margin-top:.75rem">
+          <div class="field">
+            <label for="reason">Reason</label>
+            <input type="text" id="reason" name="reason" placeholder="e.g. asked by phone not to be contacted">
+          </div>
+          <button class="danger">Never contact this business</button>
+        </form>
+      </details>
+      <details style="margin-top:.75rem">
+        <summary>Delete this business</summary>
+        <form method="post" action="/leads/{{ b.id }}/delete" style="margin-top:.75rem" onsubmit="return confirm('Delete this business and its history? This cannot be undone.')">
+          <p class="muted small">Removes the business, its findings, emails and replies. Do-not-contact entries stay.</p>
+          <button class="danger">Delete permanently</button>
+        </form>
+      </details>
+    </section>
+
+    <section class="card" id="notes">
+      <h2>Notes</h2>
+      <form method="post" action="/leads/{{ b.id }}/notes">
+        <div class="field"><textarea name="notes" aria-label="Notes">{{ b.notes or '' }}</textarea></div>
+        <div class="field">
+          <label for="tags">Tags</label>
+          <input type="text" id="tags" name="tags" value="{{ b.tags or '' }}" placeholder="comma, separated">
+        </div>
+        <button>Save notes</button>
+      </form>
+    </section>
+  </div>
+
+  <div>
+    <section class="card">
+      <h2>Website audit</h2>
+      {% if not b.website_url %}
+        <p class="muted">No website. Site checks are skipped; the pitch is about getting found and contacted online.</p>
+      {% elif b.findings %}
+        {% for fd in b.findings %}
+        <div class="finding">
+          <div class="row">
+            <span class="badge {{ 'ok' if fd.passed else fd.severity }}">{{ 'Pass' if fd.passed else fd.severity|capitalize }}</span>
+            <strong>{{ fd.check_name }}</strong>
+          </div>
+          <div class="small" style="margin-top:.2rem">{{ fd.evidence }}</div>
+          <div class="muted small">Checked {{ fd.checked_at|dt }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="muted">Not audited yet. The website audit is added in Phase 2.</p>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2>Research summary</h2>
+      {% if research %}
+        <dl class="fields">
+          <dt>What they sell</dt><dd>{{ research.what_they_sell or '–' }}</dd>
+          <dt>Likely customers</dt><dd>{{ research.likely_customers or '–' }}</dd>
+          <dt>What matters</dt><dd>{{ research.what_matters_in_this_industry or '–' }}</dd>
+          <dt>Positive detail</dt><dd>{{ research.positive_detail or '–' }}</dd>
+          <dt>Suggested angle</dt><dd>{{ research.suggested_angle or '–' }}</dd>
+        </dl>
+        <p class="muted small" style="margin-top:.5rem">Written {{ research.created_at|dt }}</p>
+      {% else %}
+        <p class="muted">No research yet.</p>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2>Timeline</h2>
+      {% if timeline %}
+      <ul class="timeline">
+        {% for kind, when, item in timeline %}
+        <li>
+          {% if kind == 'email' %}
+            <div class="row"><span class="badge {{ 'ok' if item.status == 'sent' else 'warn' if item.status == 'draft' else 'bad' if item.status == 'failed' }}">{{ item.type.replace('_', '-') }} email · {{ item.status }}{{ ' (dry run)' if item.dry_run }}</span>
+              <span class="muted small">{{ when|dt }}</span></div>
+            <details><summary><strong>{{ item.subject }}</strong></summary>
+              {% if item.to_address %}<div class="muted small">To {{ item.to_address }}</div>{% endif %}
+              <pre class="mail">{{ item.body }}</pre>
+              {% if item.status == 'draft' %}<p class="small"><a href="/queue?id={{ item.id }}">Review this draft →</a></p>{% endif %}
+            </details>
+          {% elif kind == 'reply' %}
+            <div class="row"><span class="badge c-{{ item.classification }}">reply · {{ item.classification.replace('_', ' ') }}</span>
+              <span class="muted small">{{ when|dt }} from {{ item.from_address }}</span>
+              {% if item.handled %}<span class="muted small">handled</span>{% endif %}</div>
+            <pre class="mail">{{ item.snippet or '' }}</pre>
+          {% else %}
+            <div class="small"><span class="muted">{{ when|dt }}</span> · Status {{ (item.from_status or 'none')|status_label }} → <strong>{{ item.to_status|status_label }}</strong>{% if item.note %} · {{ item.note }}{% endif %}</div>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+        <p class="muted">Nothing yet.</p>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

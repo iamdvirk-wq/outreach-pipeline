@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Outreach{% endblock %} · Outreach</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/htmx.min.js" defer></script>
+</head>
+<body>
+{% if dry_run %}
+  <div class="banner dry"><strong>Dry-run mode is on.</strong> Approve &amp; Send will only log emails, not send them. Turn it off in <a href="/settings">Settings</a> when you're ready.</div>
+{% endif %}
+{% if not sender_ok %}
+  <div class="banner setup">Add your name, business name, ABN, phone and website in <a href="/settings">Settings</a>. Every email must identify you.</div>
+{% endif %}
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="/">Outreach</a>
+    <nav class="main">
+      {% set links = [("/", "Overview"), ("/leads", "Leads"), ("/queue", "Review queue"), ("/replies", "Replies"),
+                      ("/finder", "Lead finder"), ("/do-not-contact", "Do-not-contact"), ("/settings", "Settings")] %}
+      {% for href, label in links %}
+        <a href="{{ href }}" class="{{ 'active' if (href == '/' and nav == '/') or (href != '/' and nav.startswith(href)) }}">{{ label }}</a>
+      {% endfor %}
+    </nav>
+  </div>
+</header>
+<main>
+  {% if flash_msg %}<div class="flash ok">{{ flash_msg }}</div>{% endif %}
+  {% if flash_err %}<div class="flash err">{{ flash_err }}</div>{% endif %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

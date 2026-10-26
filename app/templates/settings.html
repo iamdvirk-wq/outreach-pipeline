@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<h1>Settings</h1>
+<p class="muted">API keys and mailbox passwords are not stored here. They live in the <code>.env</code> file (see the README).</p>
+<form method="post" action="/settings">
+  <section class="card">
+    <h2>Sending</h2>
+    <div class="field">
+      <label class="check"><input type="checkbox" name="dry_run" {{ 'checked' if s.dry_run }}>
+        <span><strong>Dry-run mode</strong>: Approve &amp; Send only logs the email, it doesn't send it. Leave this on until you've tested everything.</span></label>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="daily_send_cap">Daily send cap</label>
+        <input type="number" id="daily_send_cap" name="daily_send_cap" min="1" max="{{ max_cap }}" value="{{ s.daily_send_cap }}">
+        <div class="hint">Default 20, hard maximum {{ max_cap }}. Sends are always at least 3 minutes apart.</div>
+      </div>
+      <div class="field">
+        <label for="followup_business_days">Follow-up after (business days)</label>
+        <input type="number" id="followup_business_days" name="followup_business_days" min="5" value="{{ s.followup_business_days }}">
+        <div class="hint">At least 5. Only one follow-up per business, and only after you approve it.</div>
+      </div>
+      <div class="field">
+        <label for="recontact_days">Don't re-contact a domain for (days)</label>
+        <input type="number" id="recontact_days" name="recontact_days" min="180" value="{{ s.recontact_days }}">
+        <div class="hint">At least 180.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Sender details</h2>
+    <p class="muted small">Included in every email so the recipient knows who you are (Spam Act identification rule).</p>
+    <div class="form-grid">
+      <div class="field"><label for="sender_name">Your name</label><input type="text" id="sender_name" name="sender_name" value="{{ s.sender_name }}"></div>
+      <div class="field"><label for="business_name">Business name</label><input type="text" id="business_name" name="business_name" value="{{ s.business_name }}"></div>
+      <div class="field"><label for="abn">ABN</label><input type="text" id="abn" name="abn" value="{{ s.abn }}" placeholder="12 345 678 901"></div>
+      <div class="field"><label for="phone">Phone</label><input type="text" id="phone" name="phone" value="{{ s.phone }}"></div>
+      <div class="field"><label for="website">Website</label><input type="text" id="website" name="website" value="{{ s.website }}"></div>
+    </div>
+    <div class="field">
+      <label for="signature">Extra signature line (optional)</label>
+      <textarea id="signature" name="signature" style="min-height:4rem">{{ s.signature }}</textarea>
+    </div>
+    <div class="field">
+      <label for="opt_out_line">Opt-out line (ends every email)</label>
+      <input type="text" id="opt_out_line" name="opt_out_line" value="{{ s.opt_out_line }}">
+    </div>
+  </section>
+
+  <section class="card" id="targets">
+    <h2>Lead finder targets</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label for="target_industries">Industries (one per line)</label>
+        <textarea id="target_industries" name="target_industries" placeholder="physiotherapist&#10;plumber&#10;cafe">{{ s.target_industries }}</textarea>
+      </div>
+      <div class="field">
+        <label for="target_locations">Locations (one per line)</label>
+        <textarea id="target_locations" name="target_locations" placeholder="Chermside QLD&#10;Paddington NSW">{{ s.target_locations }}</textarea>
+      </div>
+      <div class="field">
+        <label for="leads_per_run">New leads per run</label>
+        <input type="number" id="leads_per_run" name="leads_per_run" min="1" max="200" value="{{ s.leads_per_run }}">
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Qualification thresholds</h2>
+    <div class="form-grid">
+      <div class="field"><label for="min_rating">Minimum Google rating</label><input type="number" step="0.1" min="0" max="5" id="min_rating" name="min_rating" value="{{ s.min_rating }}"></div>
+      <div class="field"><label for="min_review_count">Minimum number of reviews</label><input type="number" min="0" id="min_review_count" name="min_review_count" value="{{ s.min_review_count }}"></div>
+      <div class="field"><label for="min_medium_high_findings">Minimum medium/high website issues</label><input type="number" min="0" id="min_medium_high_findings" name="min_medium_high_findings" value="{{ s.min_medium_high_findings }}">
+        <div class="hint">Businesses with no website always count as having enough issues.</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>AI model</h2>
+    <div class="field">
+      <label for="claude_model">Claude model name</label>
+      <input type="text" id="claude_model" name="claude_model" value="{{ s.claude_model }}">
+      <div class="hint">Used for research, drafting and reply sorting. Leave blank to use the value from <code>.env</code>.</div>
+    </div>
+  </section>
+
+  <button class="primary">Save settings</button>
+</form>
+{% endblock %}

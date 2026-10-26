@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+{% block content %}
+<h1>Overview</h1>
+
+<section class="card">
+  <h2>Needs your reply</h2>
+  {% if o.needs_reply %}
+    <div class="table-wrap">
+    <table>
+      <tr><th>Business</th><th>Type</th><th>Received</th><th>Snippet</th></tr>
+      {% for r in o.needs_reply %}
+      <tr>
+        <td><a href="/leads/{{ r.business.id }}">{{ r.business.name }}</a></td>
+        <td><span class="badge c-{{ r.classification }}">{{ r.classification }}</span></td>
+        <td>{{ r.received_at|dt }}</td>
+        <td class="small">{{ (r.snippet or '')[:140] }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    </div>
+  {% else %}
+    <p class="muted">Nothing waiting. Interested replies and questions will show up here.</p>
+  {% endif %}
+</section>
+
+<div class="grid stats">
+  <div class="card stat"><div class="num">{{ o.remaining }} <span class="muted small">/ {{ o.cap }}</span></div><div class="label">Sends left today</div></div>
+  <div class="card stat"><div class="num">{{ o.sent_today }}</div><div class="label">Sent today</div></div>
+  <div class="card stat"><div class="num">{{ o.sent_week }}</div><div class="label">Sent this week</div></div>
+  <div class="card stat"><div class="num">{{ o.sent_all }}</div><div class="label">Sent all time</div></div>
+  <div class="card stat"><div class="num">{{ o.reply_rate ~ '%' if o.reply_rate is not none else '–' }}</div><div class="label">Reply rate ({{ o.replied }} of {{ o.contacted }} businesses)</div></div>
+  <div class="card stat"><div class="num">{{ o.interested }}</div><div class="label">Interested replies</div></div>
+  <div class="card stat"><div class="num">{{ o.won }}</div><div class="label">Clients won</div></div>
+  <div class="card stat"><div class="num"><a href="/queue">{{ o.drafts }}</a></div><div class="label">Drafts to review</div></div>
+</div>
+
+<div class="grid two">
+  <section class="card">
+    <h2>Leads by status <span class="muted small">({{ o.total_leads }} total)</span></h2>
+    <div class="table-wrap">
+    <table>
+      {% for status, n in o.by_status %}
+      <tr>
+        <td><a href="/leads?status={{ status }}"><span class="badge s-{{ status }}">{{ status|status_label }}</span></a></td>
+        <td class="num">{{ n }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    </div>
+  </section>
+  <section class="card">
+    <h2>Quick actions</h2>
+    <div class="row" style="margin-bottom:1rem">
+      <a class="btn primary" href="/leads/new">Add a business</a>
+      <a class="btn" href="/import">Import CSV</a>
+      <a class="btn" href="/export/all.zip">Export all data</a>
+    </div>
+    <h3>Test data</h3>
+    <p class="muted small">The example businesses created by the seed script are marked <span class="badge test">TEST</span>. Remove them before real use.</p>
+    <form method="post" action="/test-data/delete" onsubmit="return confirm('Delete all test businesses?')">
+      <button class="danger">Delete test data</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

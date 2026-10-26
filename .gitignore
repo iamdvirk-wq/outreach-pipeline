@@ -1,0 +1,17 @@
+# Secrets: never commit these
+.env
+
+# Your data: database, backups, do-not-contact list and logs stay on your computer
+data/
+suppression/
+logs/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# OS clutter
+.DS_Store
+Thumbs.db

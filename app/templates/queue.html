@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Review queue{% endblock %}
+{% block content %}
+<div class="row spread" style="margin-bottom:1rem">
+  <h1 style="margin:0">Review queue</h1>
+  {% if email %}<span class="muted">Draft {{ position }} of {{ drafts|length }}</span>{% endif %}
+</div>
+
+{% if not email %}
+  <div class="card empty">No drafts waiting. Drafts are written for qualified leads from Phase 3.</div>
+{% else %}
+{% set b = email.business %}
+<div class="grid two">
+  <section class="card">
+    <div class="row spread">
+      <h2 style="margin:0"><a href="/leads/{{ b.id }}">{{ b.name }}</a></h2>
+      <span class="badge">{{ email.type.replace('_', '-') }}{{ ' · edited' if email.edited_by_me }}</span>
+    </div>
+    <p class="muted small">To:
+      {% if b.contact_email and b.email_confirmed_published %}{{ b.contact_email }}
+      {% elif b.contact_email %}<span style="color:var(--bad)">{{ b.contact_email }} (not confirmed as published)</span>
+      {% else %}<span style="color:var(--bad)">no address yet</span>. <a href="/leads/{{ b.id }}#contact">Add one</a>
+      {% endif %}
+    </p>
+    <form method="post" action="/queue/{{ email.id }}/save">
+      <div class="field">
+        <label for="subject">Subject</label>
+        <input type="text" id="subject" name="subject" value="{{ email.subject }}">
+      </div>
+      <div class="field">
+        <label for="body">Body <span class="muted small" id="wc"></span></label>
+        <textarea class="email-body" id="body" name="body">{{ email.body }}</textarea>
+      </div>
+      <div class="row">
+        <button class="primary">Save edits</button>
+        <button type="button" disabled title="Arrives in Phase 3">Regenerate…</button>
+        <button type="button" disabled title="Arrives in Phase 4">Approve &amp; Send</button>
+      </div>
+    </form>
+    <form method="post" action="/queue/{{ email.id }}/discard" style="margin-top:.75rem" onsubmit="return confirm('Discard this draft?')">
+      <button class="danger">Discard draft</button>
+    </form>
+    <p class="muted small" style="margin-top:1rem">
+      {% if next_draft %}<a href="/queue?id={{ next_draft.id }}">Skip to next draft →</a>{% endif %}
+    </p>
+  </section>
+
+  <section>
+    <div class="card">
+      <h2>Evidence: check every claim</h2>
+      {% set problems = b.findings|rejectattr('passed')|list %}
+      {% if not b.website_url %}
+        <p>No website.</p>
+      {% elif problems %}
+        {% for fd in problems %}
+        <div class="finding">
+          <div class="row"><span class="badge {{ fd.severity }}">{{ fd.severity|capitalize }}</span><strong>{{ fd.check_name }}</strong></div>
+          <div class="small">{{ fd.evidence }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="muted">No failed audit findings recorded. The email should not mention any website problems.</p>
+      {% endif %}
+    </div>
+    {% set research = b.research[0] if b.research else none %}
+    {% if research %}
+    <div class="card">
+      <h2>Research</h2>
+      <dl class="fields">
+        <dt>Sells</dt><dd>{{ research.what_they_sell or '–' }}</dd>
+        <dt>Customers</dt><dd>{{ research.likely_customers or '–' }}</dd>
+        <dt>Positive detail</dt><dd>{{ research.positive_detail or '–' }}</dd>
+        <dt>Angle</dt><dd>{{ research.suggested_angle or '–' }}</dd>
+      </dl>
+    </div>
+    {% endif %}
+  </section>
+</div>
+<script>
+  (function () {
+    var body = document.getElementById('body'), wc = document.getElementById('wc');
+    function count() { var n = body.value.trim().split(/\s+/).filter(Boolean).length; wc.textContent = '(' + n + ' words)'; }
+    body.addEventListener('input', count); count();
+  })();
+</script>
+{% endif %}
+{% endblock %}

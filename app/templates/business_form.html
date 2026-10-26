@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit ' ~ b.name if b else 'Add business' }}{% endblock %}
+{% block content %}
+<p class="small"><a href="{{ '/leads/' ~ b.id if b else '/leads' }}">← Back</a></p>
+<h1>{{ 'Edit ' ~ b.name if b else 'Add a business' }}</h1>
+{% if error is defined and error %}<div class="flash err">{{ error }}</div>{% endif %}
+
+<form method="post" class="card">
+  <div class="form-grid">
+    <div class="field" style="grid-column: 1 / -1">
+      <label for="name">Business name *</label>
+      <input type="text" id="name" name="name" value="{{ form.name or '' }}" required>
+    </div>
+    <div class="field">
+      <label for="industry">Industry / category</label>
+      <input type="text" id="industry" name="industry" value="{{ form.industry or '' }}" placeholder="e.g. Physiotherapist">
+    </div>
+    <div class="field">
+      <label for="website_url">Website</label>
+      <input type="text" id="website_url" name="website_url" value="{{ form.website_url or '' }}" placeholder="Leave blank if they have none">
+    </div>
+    <div class="field">
+      <label for="phone">Phone</label>
+      <input type="text" id="phone" name="phone" value="{{ form.phone or '' }}">
+    </div>
+    <div class="field">
+      <label for="address">Street address</label>
+      <input type="text" id="address" name="address" value="{{ form.address or '' }}">
+    </div>
+    <div class="field">
+      <label for="suburb">Suburb</label>
+      <input type="text" id="suburb" name="suburb" value="{{ form.suburb or '' }}">
+    </div>
+    <div class="field">
+      <label for="city">City</label>
+      <input type="text" id="city" name="city" value="{{ form.city or '' }}">
+    </div>
+    <div class="field">
+      <label for="state">State</label>
+      <select id="state" name="state">
+        <option value=""></option>
+        {% for st in ['ACT','NSW','NT','QLD','SA','TAS','VIC','WA'] %}<option {{ 'selected' if (form.state or '')|upper == st }}>{{ st }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="rating">Google rating</label>
+      <input type="number" step="0.1" min="0" max="5" id="rating" name="rating" value="{{ form.rating if form.rating is not none else '' }}">
+    </div>
+    <div class="field">
+      <label for="review_count">Number of reviews</label>
+      <input type="number" min="0" id="review_count" name="review_count" value="{{ form.review_count if form.review_count is not none else '' }}">
+    </div>
+    <div class="field">
+      <label for="contact_name">Contact name</label>
+      <input type="text" id="contact_name" name="contact_name" value="{{ form.contact_name or '' }}">
+    </div>
+    <div class="field">
+      <label for="tags">Tags</label>
+      <input type="text" id="tags" name="tags" value="{{ form.tags or '' }}" placeholder="comma, separated">
+    </div>
+  </div>
+
+  <fieldset class="card" style="margin-top:.5rem">
+    <legend><strong>Contact email</strong> (optional)</legend>
+    <p class="muted small">Only enter an address you found yourself, published on the business's own website or listing.</p>
+    <div class="field">
+      <input type="email" id="contact_email" name="contact_email" aria-label="Contact email" value="{{ form.contact_email or '' }}" autocomplete="off">
+    </div>
+    <label class="check"><input type="checkbox" name="email_confirmed_published" {{ 'checked' if form.email_confirmed_published in (true, 'on') }}>
+      I found this address published on the business's own website or listing.</label>
+  </fieldset>
+
+  <div class="field">
+    <label for="notes">Notes</label>
+    <textarea id="notes" name="notes">{{ form.notes or '' }}</textarea>
+  </div>
+  <button class="primary">{{ 'Save changes' if b else 'Add business' }}</button>
+</form>
+{% endblock %}

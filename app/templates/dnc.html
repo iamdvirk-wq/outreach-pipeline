@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Do-not-contact{% endblock %}
+{% block content %}
+<h1>Do-not-contact list</h1>
+<p>Every send is checked against this list by website domain and email address. Opt-outs are permanent and can't be removed. The list is also saved to <code>{{ suppression_file.name }}</code> in the <code>{{ suppression_file.parent.name }}</code> folder, so it survives a database reset, and it's included in the daily backup.</p>
+
+<section class="card">
+  <h2>Add an entry</h2>
+  <form method="post" action="/do-not-contact/add">
+    <div class="form-grid">
+      <div class="field">
+        <label for="domain">Website domain</label>
+        <input type="text" id="domain" name="domain" placeholder="example.com.au">
+      </div>
+      <div class="field">
+        <label for="email">Email address</label>
+        <input type="email" id="email" name="email" placeholder="name@example.com.au">
+      </div>
+      <div class="field">
+        <label for="business_name">Business name (optional)</label>
+        <input type="text" id="business_name" name="business_name">
+      </div>
+      <div class="field">
+        <label for="reason">Reason</label>
+        <input type="text" id="reason" name="reason" placeholder="e.g. asked by phone">
+      </div>
+    </div>
+    <p class="muted small">Enter a domain, an email, or both. Free mailbox domains like gmail.com are never blocked as a whole, only the exact address.</p>
+    <button class="primary">Add to list</button>
+  </form>
+</section>
+
+{% if entries %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Added</th><th>Domain</th><th>Email</th><th>Business</th><th>Type</th><th>Reason</th><th></th></tr></thead>
+  <tbody>
+  {% for e in entries %}
+  <tr>
+    <td>{{ e.added_at|d }}</td>
+    <td>{{ e.domain or '' }}</td>
+    <td>{{ e.email or '' }}</td>
+    <td>{{ e.business_name or '' }}</td>
+    <td><span class="badge {{ 'bad' if e.kind != 'manual' }}">{{ e.kind.replace('_', ' ') }}</span></td>
+    <td class="small">{{ e.reason }}</td>
+    <td>
+      {% if e.kind == 'manual' %}
+      <form method="post" action="/do-not-contact/{{ e.id }}/remove" onsubmit="return confirm('Remove this entry? Only do this if it was added by mistake.')">
+        <button class="danger">Remove</button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<div class="card empty">The list is empty.</div>
+{% endif %}
+{% endblock %}

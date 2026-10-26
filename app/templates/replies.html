@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Replies{% endblock %}
+{% block content %}
+<div class="row spread" style="margin-bottom:1rem">
+  <h1 style="margin:0">Replies</h1>
+  <div class="row">
+    <a class="btn {{ 'primary' if show == 'all' }}" href="/replies">All</a>
+    <a class="btn {{ 'primary' if show == 'unhandled' }}" href="/replies?show=unhandled">Not handled</a>
+  </div>
+</div>
+<p class="muted small">Replies are collected from your mailbox every 15 minutes once Phase 4 is built. Opt-outs are added to the do-not-contact list automatically.</p>
+{% if replies %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Received</th><th>Business</th><th>From</th><th>Type</th><th>Snippet</th><th>Handled</th></tr></thead>
+  <tbody>
+    {% for r in replies %}{% include "_reply_row.html" %}{% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<div class="card empty">No replies yet.</div>
+{% endif %}
+{% endblock %}

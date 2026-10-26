@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Leads{% endblock %}
+{% block content %}
+<div class="row spread" style="margin-bottom:1rem">
+  <h1 style="margin:0">Leads</h1>
+  <div class="row">
+    <a class="btn primary" href="/leads/new">Add business</a>
+    <a class="btn" href="/import">Import CSV</a>
+    <a class="btn" href="/export/businesses.csv">Export CSV</a>
+  </div>
+</div>
+
+<form class="card filters" method="get" action="/leads"
+      hx-get="/leads" hx-target="#leads-table"
+      hx-trigger="input changed delay:300ms from:input[type=search], change">
+  <div style="grid-column: span 2">
+    <label for="q">Search</label>
+    <input type="search" id="q" name="q" value="{{ f.q }}" placeholder="Name, domain, suburb, tag…">
+  </div>
+  <div>
+    <label for="status">Status</label>
+    <select id="status" name="status">
+      <option value="">Any</option>
+      {% for s, label in STATUS_LABELS.items() %}<option value="{{ s }}" {{ 'selected' if f.status == s }}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="industry">Industry</label>
+    <select id="industry" name="industry">
+      <option value="">Any</option>
+      {% for v in industries %}<option {{ 'selected' if f.industry == v }}>{{ v }}</option>{% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="suburb">Suburb</label>
+    <select id="suburb" name="suburb">
+      <option value="">Any</option>
+      {% for v in suburbs %}<option {{ 'selected' if f.suburb == v }}>{{ v }}</option>{% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="min_score">Min score</label>
+    <input type="number" step="any" id="min_score" name="min_score" value="{{ f.min_score }}">
+  </div>
+  <div>
+    <label for="found_from">Found from</label>
+    <input type="date" id="found_from" name="found_from" value="{{ f.found_from }}">
+  </div>
+  <div>
+    <label for="found_to">Found to</label>
+    <input type="date" id="found_to" name="found_to" value="{{ f.found_to }}">
+  </div>
+  <div>
+    <label for="contacted">Contacted</label>
+    <select id="contacted" name="contacted">
+      <option value="">Any</option>
+      <option value="yes" {{ 'selected' if f.contacted == 'yes' }}>Yes</option>
+      <option value="no" {{ 'selected' if f.contacted == 'no' }}>No</option>
+    </select>
+  </div>
+  <div>
+    <label for="replied">Replied</label>
+    <select id="replied" name="replied">
+      <option value="">Any</option>
+      <option value="yes" {{ 'selected' if f.replied == 'yes' }}>Yes</option>
+      <option value="no" {{ 'selected' if f.replied == 'no' }}>No</option>
+    </select>
+  </div>
+  <input type="hidden" name="sort" value="{{ f.sort }}">
+  <input type="hidden" name="dir" value="{{ f.dir }}">
+  <div class="row"><noscript><button>Filter</button></noscript><a class="btn" href="/leads">Clear</a></div>
+</form>
+
+<div id="leads-table">{% include "_leads_table.html" %}</div>
+{% endblock %}

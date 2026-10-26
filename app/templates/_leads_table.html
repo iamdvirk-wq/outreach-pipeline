@@ -1,0 +1,42 @@
+<p class="muted small">{{ rows|length }} business{{ '' if rows|length == 1 else 'es' }}</p>
+{% macro th(col, label, cls='') -%}
+  <th class="{{ cls }}"><a href="/leads?{{ f.sort_link(col) }}" hx-get="/leads?{{ f.sort_link(col) }}" hx-target="#leads-table">{{ label }}{% if f.sort == col %} {{ '▲' if f.dir == 'asc' else '▼' }}{% endif %}</a></th>
+{%- endmacro %}
+{% if rows %}
+<div class="table-wrap">
+<table>
+  <thead><tr>
+    {{ th('name', 'Business') }}
+    {{ th('status', 'Status') }}
+    {{ th('industry', 'Industry') }}
+    {{ th('suburb', 'Suburb') }}
+    {{ th('score', 'Score', 'num') }}
+    {{ th('rating', 'Rating', 'num') }}
+    {{ th('found', 'Found') }}
+    {{ th('contacted', 'Last contacted') }}
+    <th>Replied</th>
+  </tr></thead>
+  <tbody>
+  {% for b, last, replied in rows %}
+  <tr>
+    <td>
+      <a href="/leads/{{ b.id }}"><strong>{{ b.name }}</strong></a>
+      {% if b.is_test_data %}<span class="badge test">TEST</span>{% endif %}
+      <div class="muted small">{{ b.domain or ('no website' if not b.website_url else 'social page only') }}</div>
+    </td>
+    <td><span class="badge s-{{ b.status }}">{{ b.status|status_label }}</span></td>
+    <td>{{ b.industry or '' }}</td>
+    <td>{{ b.suburb or '' }}</td>
+    <td class="num">{{ '%.0f'|format(b.qualification_score) if b.qualification_score is not none else '' }}</td>
+    <td class="num">{% if b.rating is not none %}{{ b.rating }} <span class="muted small">({{ b.review_count or 0 }})</span>{% endif %}</td>
+    <td>{{ b.date_found|d }}</td>
+    <td>{{ last|d }}</td>
+    <td>{{ 'Yes' if replied else '' }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<div class="card empty">No businesses match. <a href="/leads/new">Add one</a> or <a href="/import">import a CSV</a>.</div>
+{% endif %}

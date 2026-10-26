@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Lead finder{% endblock %}
+{% block content %}
+<h1>Lead finder</h1>
+<div class="flash info">The scheduled lead finder (Google Places API) is built in Phase 5. Until then, add leads by hand or <a href="/import">import a CSV</a> you collected yourself.</div>
+<div class="grid two">
+  <section class="card">
+    <h2>Target industries</h2>
+    {% if settings.industries_list %}<ul>{% for i in settings.industries_list %}<li>{{ i }}</li>{% endfor %}</ul>
+    {% else %}<p class="muted">None yet.</p>{% endif %}
+    <a href="/settings#targets">Edit in Settings</a>
+  </section>
+  <section class="card">
+    <h2>Target locations</h2>
+    {% if settings.locations_list %}<ul>{% for l in settings.locations_list %}<li>{{ l }}</li>{% endfor %}</ul>
+    {% else %}<p class="muted">None yet.</p>{% endif %}
+    <a href="/settings#targets">Edit in Settings</a>
+  </section>
+</div>
+<section class="card">
+  <h2>Each run</h2>
+  <p>Up to <strong>{{ settings.leads_per_run }}</strong> new businesses per run. Schedule, coverage history, API spend and the Run now button arrive in Phase 5.</p>
+  <button disabled title="Arrives in Phase 5">Run now</button>
+</section>
+{% endblock %}

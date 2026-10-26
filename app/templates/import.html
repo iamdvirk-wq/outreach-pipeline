@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Import CSV{% endblock %}
+{% block content %}
+<p class="small"><a href="/leads">← Leads</a></p>
+<h1>Import businesses from CSV</h1>
+{% if error is defined and error %}<div class="flash err">{{ error }}</div>{% endif %}
+
+<div class="flash warn">
+  <strong>Email addresses are never imported.</strong> Any email column in your file is ignored. Under the Spam Act you may not use address-harvesting software or lists it produced. Add each address by hand on the business's page once you've found it published on their own website or listing.
+</div>
+
+{% if result %}
+<section class="card">
+  <h2>Import finished{% if filename %}: {{ filename }}{% endif %}</h2>
+  <p><strong>{{ result.imported }}</strong> businesses added, <strong>{{ result.skipped|length }}</strong> skipped.</p>
+  {% if result.ignored_email_columns %}
+    <div class="flash info">Ignored email column{{ 's' if result.ignored_email_columns|length > 1 }}: <strong>{{ result.ignored_email_columns|join(', ') }}</strong>. Addresses must be added manually.</div>
+  {% endif %}
+  {% if result.unknown_columns %}
+    <p class="muted small">Columns not used: {{ result.unknown_columns|join(', ') }}</p>
+  {% endif %}
+  {% if result.skipped %}
+  <details {{ 'open' if result.skipped|length < 15 }}>
+    <summary>Skipped rows</summary>
+    <div class="table-wrap" style="margin-top:.5rem">
+    <table>
+      <tr><th>Row</th><th>Name</th><th>Reason</th></tr>
+      {% for row, name, reason in result.skipped %}<tr><td>{{ row }}</td><td>{{ name }}</td><td>{{ reason }}</td></tr>{% endfor %}
+    </table>
+    </div>
+  </details>
+  {% endif %}
+  <p style="margin-top:1rem"><a class="btn primary" href="/leads?status=new">See new leads</a></p>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Upload a file</h2>
+  <p>Columns used: <code>name</code>, <code>website</code>, <code>phone</code>, <code>industry</code>, <code>suburb</code>, <code>city</code>, <code>rating</code>, <code>review_count</code>; <code>state</code> and <code>address</code> are optional. Only <code>name</code> is required. Duplicates (same website domain, or same name and suburb when there's no website) and anything on the do-not-contact list are skipped.</p>
+  <p><a href="/import/template.csv">Download an example file</a></p>
+  <form method="post" action="/import" enctype="multipart/form-data">
+    <div class="field"><input type="file" name="file" accept=".csv,text/csv" required aria-label="CSV file"></div>
+    <button class="primary">Import</button>
+  </form>
+</section>
+{% endblock %}

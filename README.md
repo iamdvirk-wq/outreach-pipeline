@@ -53,9 +53,16 @@ When a new phase is ready, open GitHub Desktop and click **Fetch origin**, then
 
 **Mac**
 1. Open **Terminal** (press ⌘ Space, type *Terminal*, press Enter).
-2. Type `cd ` (with a space), drag the `outreach-pipeline` folder onto the
-   Terminal window, and press Enter.
-3. Type `./start.sh` and press Enter.
+2. Move into the project folder. If you cloned with GitHub Desktop's default
+   location, paste this and press Enter:
+   ```
+   cd ~/Documents/GitHub/outreach-pipeline
+   ```
+   (Elsewhere? Type `cd ` with a space, drag the folder onto the Terminal
+   window, then press Enter. Don't paste the folder path on its own; that
+   gives "permission denied".)
+3. Paste `./start.sh` and press Enter. If that says "permission denied",
+   use `bash start.sh` instead.
 
 **Windows**
 - Open the `outreach-pipeline` folder and double-click **start.bat**.

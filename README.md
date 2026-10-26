@@ -13,8 +13,8 @@ email. The rules that keep you inside the Spam Act are built into the app; see
 | Phase | What it adds | Status |
 |---|---|---|
 | 1 | Database, dashboard, add/edit businesses, CSV import, do-not-contact list, export | **Done** |
-| 2 | Website audit and AI research summary | Next |
-| 3 | Personalised email drafts | |
+| 2 | Website audit, AI research summary and lead scoring | **Done** |
+| 3 | Personalised email drafts | Next |
 | 4 | Sending (with all safety checks) and reply tracking | |
 | 5 | Scheduled lead finder (Google Places) | |
 
@@ -106,7 +106,9 @@ you on first start (a copy of `.env.example`). Open it in TextEdit (Mac) or
 Notepad (Windows), paste each value after the `=`, save, and restart the app.
 `.env` is never uploaded to GitHub and keys are never written to the logs.
 
-You don't need any keys for Phase 1.
+Phase 2 needs `ANTHROPIC_API_KEY`. `GOOGLE_PAGESPEED_API_KEY` is optional but
+recommended: without it, the speed check shares Google's small free allowance
+and often gets skipped.
 
 | Setting | Needed from | Where to get it |
 |---|---|---|
@@ -166,6 +168,55 @@ Warm up a new domain slowly: a handful of emails a day for the first couple of
 weeks, well under the daily cap.
 
 ---
+
+## How website research works (Phase 2)
+
+Every business with status **New** is researched automatically every 10
+minutes while the app is open, up to 10 at a time. You can also press **Run
+now** on the Overview page, or **Research now** / **Re-run research** on a
+business's page. Each business takes about a minute.
+
+1. **Website check.** The app reads the homepage and up to 3 key pages
+   (contact, services, about), then checks up to 20 homepage links. It records
+   each check with the evidence it saw:
+   HTTPS, mobile viewport, PageSpeed mobile score (flagged below 50),
+   tap-to-call link, contact form or booking link (and whether the form's
+   address works), footer copyright year (flagged at 3+ years old), broken
+   links, page title and meta description, online booking or quote requests
+   (for trades, health, hospitality and services), and "no solicitations"
+   wording.
+   It also notes the contact page and **whether** an email address appears to
+   be published there: yes or no only, never the address itself.
+2. **Research summary.** Claude reads the findings and page text and writes
+   what they sell, likely customers, what matters in their industry, one
+   genuine positive detail from their site, and a suggested angle. Anything it
+   isn't sure about is marked "(uncertain)". Email addresses are removed from
+   the page text before it's sent.
+3. **Scoring.** The business is marked **Qualified** if it meets your
+   thresholds in Settings (rating, number of reviews, at least 2 medium or high
+   website problems or no website at all) and isn't a franchise or chain, on
+   the do-not-contact list, contacted in the last 180 days, or saying "no
+   solicitations". Otherwise it's **Disqualified** and the reason is shown.
+   Qualified leads get a score out of 100 so the best ones sort to the top of
+   the Leads page.
+
+Businesses with **no website** (or only a Facebook-style page) skip the website
+check and are pitched on getting found and contacted online.
+
+**Being a good web citizen:** the checker obeys each site's robots.txt, names
+itself `OutreachPipelineAudit` with your website in its user agent, waits at
+least 2 seconds between requests to the same site, and never submits forms.
+
+**If something goes wrong** (a site is down, an API limit is hit), the error is
+shown in red on the business's page and it's retried on the next run. After 3
+failed attempts it stops and the Overview shows it under "need attention". Fix
+the cause and press **Re-run research**. Businesses created by the seed script
+(TEST) are never researched.
+
+**Cost:** each business uses roughly 5,000-10,000 tokens of Claude, about
+A$0.03-0.08 with the default `claude-sonnet-5-5` model. PageSpeed is free.
+Turn off **Research new leads automatically** in Settings if you'd rather
+start each run yourself.
 
 ## Daily workflow
 
@@ -255,4 +306,7 @@ for businesses is at <https://www.acma.gov.au/avoid-sending-spam>.
   Migrations run automatically when the app starts.
 - `app/routes/`: the dashboard pages; `app/templates/`: the HTML (Jinja2 + HTMX).
 - `app/dnc.py`: the do-not-contact list; `app/csv_import.py`: CSV import.
+- `app/audit/`: polite fetcher, page checks and PageSpeed; `app/research.py`:
+  the Claude call; `app/qualify.py`: scoring; `app/pipeline.py`: the job that
+  ties them together.
 - `BUILD_BRIEF.md`: the full specification for all phases.

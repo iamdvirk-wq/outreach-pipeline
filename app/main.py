@@ -1,18 +1,19 @@
 """The FastAPI app: wires up pages, startup tasks and the scheduler."""
 import logging
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, Request
 from fastapi.responses import PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
-from app import config, dnc
+from app import config, dnc, pipeline
 from app.backup import run_backup
 from app.db import SessionLocal
 from app.logging_setup import setup_logging
 from app.migrate import upgrade_database
-from app.routes import admin, dashboard, leads
+from app.routes import admin, dashboard, leads, research
 from app.services import get_settings
 from app.timeutil import LOCAL_TZ
 
@@ -27,6 +28,11 @@ def startup() -> None:
     with SessionLocal() as session:
         get_settings(session)
         dnc.sync_from_file(session)
+    pipeline.reset_interrupted()
+
+
+def research_new_leads() -> None:
+    pipeline.run_queue(only_if_auto=True)
 
 
 def _safe_job(fn):
@@ -49,6 +55,10 @@ async def lifespan(app: FastAPI):
     run_backup()
     scheduler = BackgroundScheduler(timezone=LOCAL_TZ)
     scheduler.add_job(_safe_job(run_backup), "cron", hour=2, minute=17, id="daily_backup", misfire_grace_time=3600)
+    scheduler.add_job(
+        _safe_job(research_new_leads), "interval", minutes=10, id="research",
+        next_run_time=datetime.now(LOCAL_TZ) + timedelta(seconds=30), max_instances=1, coalesce=True,
+    )
     scheduler.start()
     app.state.scheduler = scheduler
     log.info("Outreach dashboard running at http://localhost:%s", config.PORT)
@@ -83,3 +93,4 @@ app.mount("/static", StaticFiles(directory=config.BASE_DIR / "app" / "static"), 
 app.include_router(dashboard.router)
 app.include_router(leads.router)
 app.include_router(admin.router)
+app.include_router(research.router)

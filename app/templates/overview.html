@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Overview{% endblock %}
+{% block head %}{% if r.running %}<meta http-equiv="refresh" content="10">{% endif %}{% endblock %}
 {% block content %}
 <h1>Overview</h1>
 
@@ -22,6 +23,26 @@
   {% else %}
     <p class="muted">Nothing waiting. Interested replies and questions will show up here.</p>
   {% endif %}
+</section>
+
+<section class="card">
+  <div class="row spread">
+    <h2 style="margin:0">Website research</h2>
+    <form method="post" action="/research/run">
+      <button class="primary" {{ 'disabled' if r.running or r.key_missing or not r.waiting }}>{{ 'Running…' if r.running else 'Run now' }}</button>
+    </form>
+  </div>
+  {% if r.key_missing %}
+    <div class="flash warn" style="margin:.75rem 0 0">Add your <code>ANTHROPIC_API_KEY</code> to the <code>.env</code> file and restart the app to turn on research. See the README.</div>
+  {% endif %}
+  <p style="margin:.75rem 0 .25rem">
+    <a href="/leads?status=new"><strong>{{ r.waiting }}</strong> new lead{{ '' if r.waiting == 1 else 's' }} waiting</a>
+    {% if r.stuck %} · <a href="/leads?status=new" style="color:var(--bad)">{{ r.stuck }} need attention</a>{% endif %}
+    · {{ 'Runs automatically every 10 minutes while the app is open.' if r.auto else 'Automatic research is off (Settings).' }}
+  </p>
+  {% if r.running %}<p class="small">Researching {{ r.current or '…' }}. This page refreshes every 10 seconds.</p>{% endif %}
+  {% if r.last_summary %}<p class="muted small">Last run{% if r.last_run_at %} {{ r.last_run_at|dt }}{% endif %}: {{ r.last_summary }}</p>{% endif %}
+  {% if r.pagespeed_key_missing and not r.key_missing %}<p class="muted small">Tip: add <code>GOOGLE_PAGESPEED_API_KEY</code> to <code>.env</code> so the speed check doesn't hit Google's shared limit.</p>{% endif %}
 </section>
 
 <div class="grid stats">

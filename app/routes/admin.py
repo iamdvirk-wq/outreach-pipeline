@@ -92,6 +92,7 @@ async def save_settings(request: Request, session: Session = Depends(get_session
         session.rollback()
         return redirect("/settings", err="Fill in all sender details (name, business, ABN, phone, website) before turning off dry-run.")
     s.dry_run = form.get("dry_run") == "on"
+    s.auto_research = form.get("auto_research") == "on"
     session.commit()
     msg = "Settings saved."
     if requested_cap != s.daily_send_cap:

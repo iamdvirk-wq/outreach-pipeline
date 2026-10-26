@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app import pipeline
 from app.db import get_session
 from app.models import REPLY_CLASSIFICATIONS, Business, Email, Reply
 from app.queries import overview
@@ -14,7 +15,7 @@ router = APIRouter()
 
 @router.get("/")
 def overview_page(request: Request, session: Session = Depends(get_session)):
-    return render(request, "overview.html", o=overview(session))
+    return render(request, "overview.html", o=overview(session), r=pipeline.status(session))
 
 
 # ---- Review queue ------------------------------------------------------------

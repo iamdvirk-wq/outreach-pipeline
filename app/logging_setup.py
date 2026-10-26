@@ -31,4 +31,5 @@ def setup_logging() -> None:
         h.addFilter(RedactSecrets())
         root.addHandler(h)
     logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpx2").setLevel(logging.WARNING)
     logging.getLogger("apscheduler").setLevel(logging.WARNING)

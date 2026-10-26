@@ -90,6 +90,7 @@ def business_detail(request: Request, business_id: int, session: Session = Depen
         last_contacted=last_contacted(b),
         timeline=timeline,
         research=b.research[0] if b.research else None,
+        findings=sorted(b.findings, key=lambda f: (f.passed, {"high": 0, "medium": 1, "low": 2}.get(f.severity, 3))),
         manual_statuses=sorted(MANUAL_STATUSES),
     )
 

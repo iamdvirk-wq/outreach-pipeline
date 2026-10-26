@@ -84,6 +84,10 @@
       <input type="text" id="claude_model" name="claude_model" value="{{ s.claude_model }}">
       <div class="hint">Used for research, drafting and reply sorting. Leave blank to use the value from <code>.env</code>.</div>
     </div>
+    <div class="field">
+      <label class="check"><input type="checkbox" name="auto_research" {{ 'checked' if s.auto_research }}>
+        <span><strong>Research new leads automatically</strong> every 10 minutes while the app is open (up to 10 at a time). Each one costs a few cents of Claude usage.</span></label>
+    </div>
   </section>
 
   <button class="primary">Save settings</button>

@@ -22,6 +22,7 @@
     <td>
       <a href="/leads/{{ b.id }}"><strong>{{ b.name }}</strong></a>
       {% if b.is_test_data %}<span class="badge test">TEST</span>{% endif %}
+      {% if b.last_error and not b.last_error.startswith('Some checks') %}<span class="badge bad" title="{{ b.last_error }}">error</span>{% endif %}
       <div class="muted small">{{ b.domain or ('no website' if not b.website_url else 'social page only') }}</div>
     </td>
     <td><span class="badge s-{{ b.status }}">{{ b.status|status_label }}</span></td>

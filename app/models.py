@@ -84,6 +84,8 @@ class Business(Base):
     notes: Mapped[str | None] = mapped_column(Text)
     tags: Mapped[str | None] = mapped_column(String(500))  # comma separated
     last_error: Mapped[str | None] = mapped_column(Text)  # shown on the dashboard
+    research_attempts: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    researched_at: Mapped[datetime | None] = mapped_column(DateTime)
     is_test_data: Mapped[bool] = mapped_column(Boolean, default=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
 
@@ -110,6 +112,11 @@ class Business(Base):
     @property
     def has_website(self) -> bool:
         return bool(self.website_url)
+
+    @property
+    def has_own_website(self) -> bool:
+        """False for no website, or only a Facebook/Instagram-style page."""
+        return bool(self.domain)
 
     @property
     def tag_list(self) -> list[str]:
@@ -140,6 +147,9 @@ class ResearchSummary(Base):
     what_matters_in_this_industry: Mapped[str | None] = mapped_column(Text)
     positive_detail: Mapped[str | None] = mapped_column(Text)
     suggested_angle: Mapped[str | None] = mapped_column(Text)
+    franchise_or_chain: Mapped[str] = mapped_column(String(10), default="uncertain", server_default="uncertain")
+    franchise_evidence: Mapped[str | None] = mapped_column(Text)
+    model: Mapped[str | None] = mapped_column(String(100))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     business: Mapped[Business] = relationship(back_populates="research")
@@ -242,6 +252,7 @@ class Settings(Base):
     followup_business_days: Mapped[int] = mapped_column(Integer, default=5)
 
     claude_model: Mapped[str] = mapped_column(String(100), default="")
+    auto_research: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
 
     @staticmethod

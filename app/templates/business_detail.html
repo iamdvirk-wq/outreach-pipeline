@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ b.name }}{% endblock %}
+{% block head %}{% if b.status == 'researching' %}<meta http-equiv="refresh" content="10">{% endif %}{% endblock %}
 {% block content %}
 <p class="small"><a href="/leads">← All leads</a></p>
 <div class="row spread" style="margin-bottom:1rem">
@@ -21,7 +22,8 @@
 {% if b.status == 'disqualified' and b.disqualify_reason %}
   <div class="flash warn"><strong>Disqualified:</strong> {{ b.disqualify_reason }}</div>
 {% endif %}
-{% if b.last_error %}<div class="flash err"><strong>Last error:</strong> {{ b.last_error }}</div>{% endif %}
+{% if b.status == 'researching' %}<div class="flash info">Checking the website and writing research… This page refreshes every 10 seconds.</div>{% endif %}
+{% if b.last_error %}<div class="flash {{ 'warn' if b.last_error.startswith('Some checks') else 'err' }}">{{ b.last_error }}</div>{% endif %}
 
 <div class="grid two">
   <div>
@@ -123,11 +125,17 @@
 
   <div>
     <section class="card">
-      <h2>Website audit</h2>
-      {% if not b.website_url %}
-        <p class="muted">No website. Site checks are skipped; the pitch is about getting found and contacted online.</p>
+      <div class="row spread">
+        <h2 style="margin:0">Website audit</h2>
+        {% if b.status in ('new', 'researched', 'qualified', 'disqualified') and not b.is_test_data %}
+        <form method="post" action="/leads/{{ b.id }}/research"><button>{{ 'Re-run research' if b.researched_at else 'Research now' }}</button></form>
+        {% endif %}
+      </div>
+      {% if b.researched_at %}<p class="muted small" style="margin-top:.4rem">Last researched {{ b.researched_at|dt }}</p>{% endif %}
+      {% if not b.has_own_website %}
+        <p class="muted">{{ 'No website.' if not b.website_url else 'Only a social media page, no website of its own.' }} Site checks are skipped; the pitch is about getting found and contacted online.</p>
       {% elif b.findings %}
-        {% for fd in b.findings %}
+        {% for fd in findings %}
         <div class="finding">
           <div class="row">
             <span class="badge {{ 'ok' if fd.passed else fd.severity }}">{{ 'Pass' if fd.passed else fd.severity|capitalize }}</span>
@@ -138,7 +146,7 @@
         </div>
         {% endfor %}
       {% else %}
-        <p class="muted">Not audited yet. The website audit is added in Phase 2.</p>
+        <p class="muted">Not checked yet. New leads are checked automatically, or press Research now.</p>
       {% endif %}
     </section>
 
@@ -151,8 +159,9 @@
           <dt>What matters</dt><dd>{{ research.what_matters_in_this_industry or '–' }}</dd>
           <dt>Positive detail</dt><dd>{{ research.positive_detail or '–' }}</dd>
           <dt>Suggested angle</dt><dd>{{ research.suggested_angle or '–' }}</dd>
+          <dt>Franchise / chain?</dt><dd>{{ research.franchise_or_chain|capitalize }}{% if research.franchise_evidence %}: {{ research.franchise_evidence }}{% endif %}</dd>
         </dl>
-        <p class="muted small" style="margin-top:.5rem">Written {{ research.created_at|dt }}</p>
+        <p class="muted small" style="margin-top:.5rem">Written {{ research.created_at|dt }}{% if research.model %} by {{ research.model }}{% endif %}. Check anything marked "(uncertain)" before using it.</p>
       {% else %}
         <p class="muted">No research yet.</p>
       {% endif %}
